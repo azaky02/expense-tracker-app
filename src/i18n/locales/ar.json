@@ -1,0 +1,139 @@
+{
+  "common": {
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "add": "إضافة",
+    "optional": "اختياري",
+    "cash": "كاش",
+    "card": "بطاقة",
+    "all": "الكل",
+    "egp": "ج.م",
+    "today": "اليوم",
+    "loading": "جاري التحميل...",
+    "comingSoon": "قريباً"
+  },
+  "nav": {
+    "home": "الرئيسية",
+    "transactions": "المعاملات",
+    "cards": "البطاقات",
+    "settings": "الإعدادات"
+  },
+  "dashboard": {
+    "greeting": "أهلاً، {{name}} 👋",
+    "greetingGeneric": "أهلاً بيك 👋",
+    "totalSpentThisMonth": "إجمالي مصروفات الشهر",
+    "income": "الدخل",
+    "remaining": "المتبقي",
+    "expenseByCategory": "توزيع المصروفات حسب الفئة",
+    "recentTransactions": "آخر المعاملات",
+    "dueSoonAlert": "بعد {{days}} أيام تنبيه استحقاق {{cardName}}",
+    "reports": "التقارير"
+  },
+  "transactions": {
+    "addTitle": "إضافة معاملة جديدة",
+    "expense": "مصروف",
+    "income": "دخل",
+    "amount": "المبلغ",
+    "date": "التاريخ",
+    "category": "الفئة",
+    "paymentMethod": "طريقة الدفع",
+    "chooseCard": "اختر البطاقة",
+    "beneficiary": "المستفيد",
+    "beneficiaryPlaceholder": "مين المستفيد من المصروف؟",
+    "previous": "سابقين",
+    "notes": "ملاحظات",
+    "attachment": "مرفق",
+    "attachInvoice": "التقط صورة الفاتورة من الكاميرا أو المعرض",
+    "saveTransaction": "حفظ المعاملة",
+    "quickNote": "ملاحظة سريعة",
+    "monthTotalForCategory": "إجمالي {{category}} هذا الشهر: {{amount}}"
+  },
+  "categories": {
+    "food": "أكل و شرب",
+    "transport": "مواصلات",
+    "bills": "فواتير",
+    "entertainment": "ترفيه",
+    "health": "صحة",
+    "other": "أخرى",
+    "manage": "إدارة الفئات"
+  },
+  "cards": {
+    "paymentMethods": "طرق الدفع",
+    "cashSpendThisMonth": "مصروفات الشهر: {{amount}}",
+    "addNewCard": "إضافة بطاقة جديدة",
+    "cardDetails": "تفاصيل البطاقة",
+    "creditLimit": "الحد الائتماني",
+    "dueDate": "تاريخ الاستحقاق",
+    "spendThisMonth": "مصروفات الشهر",
+    "cardTransactions": "معاملات هذه البطاقة",
+    "editCard": "تعديل بيانات البطاقة",
+    "bank": "البنك",
+    "cardType": "نوع البطاقة",
+    "cardCategory": "التصنيف",
+    "credit": "ائتمان",
+    "debit": "خصم مباشر",
+    "nickname": "اسم مستعار",
+    "last4Digits": "آخر 4 أرقام"
+  },
+  "settings": {
+    "yourName": "اسمك",
+    "yourNamePlaceholder": "اكتب اسمك",
+    "language": "اللغة",
+    "calendar": "التقويم",
+    "notifications": "الإشعارات",
+    "appLock": "قفل التطبيق",
+    "backup": "نسخة احتياطية",
+    "restartToApply": "سيتم إعادة تشغيل التطبيق لتطبيق اللغة الجديدة"
+  },
+  "dates": {
+    "year": "السنة",
+    "month": "الشهر",
+    "day": "اليوم",
+    "gregorian": "ميلادي",
+    "hijri": "هجري"
+  },
+  "reports": {
+    "byPaymentMethod": "توزيع المصروفات حسب طريقة الدفع",
+    "monthOverMonth": "مقارنة شهر بشهر",
+    "byBeneficiary": "حسب المستفيد",
+    "exportPdf": "تصدير PDF"
+  },
+  "onboarding": {
+    "welcome": "أهلاً بيك في المصاريف بتاعتي 👋",
+    "getStarted": "ابدأ"
+  },
+  "backup": {
+    "description": "تصدير كل بياناتك (المعاملات، البطاقات، الفئات) إلى ملف، أو استعادتها من ملف سابق. لا يشمل صور الفواتير المرفقة.",
+    "export": "تصدير نسخة احتياطية",
+    "import": "استعادة نسخة احتياطية",
+    "importWarningTitle": "استعادة نسخة احتياطية",
+    "importWarningBody": "سيتم استبدال كل البيانات الحالية بالكامل. هل تريد المتابعة؟",
+    "importSuccess": "تمت الاستعادة بنجاح"
+  },
+  "budgets": {
+    "title": "ميزانية \"{{category}}\" الشهرية",
+    "enable": "تفعيل الميزانية",
+    "monthlyLimit": "الحد الشهري"
+  },
+  "notifications": {
+    "mandatoryDueDate": "تنبيه استحقاق البطاقات (قبل 3 أيام)",
+    "alwaysOn": "مفعّل دائماً",
+    "extraSevenDays": "تذكير إضافي قبل 7 أيام",
+    "extraOneDay": "تذكير إضافي قبل يوم واحد",
+    "dailyLogReminder": "تذكير يومي بتسجيل المصروفات"
+  },
+  "security": {
+    "enterPin": "أدخل رمز PIN",
+    "wrongPin": "رمز غير صحيح",
+    "useBiometrics": "استخدام البصمة / Face ID",
+    "unlockPrompt": "افتح التطبيق",
+    "setupPin": "إنشاء رمز PIN",
+    "confirmPin": "تأكيد رمز PIN",
+    "pinMismatch": "الرمزان غير متطابقين",
+    "enableAppLock": "تفعيل قفل التطبيق",
+    "enableBiometrics": "تفعيل البصمة / Face ID",
+    "pinSetSuccess": "تم إعداد رمز PIN بنجاح"
+  }
+}
