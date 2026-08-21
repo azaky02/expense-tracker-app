@@ -67,9 +67,9 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="cards/index"
+        name="accounts/index"
         options={{
-          title: t('nav.cards'),
+          title: t('nav.accounts'),
           tabBarIcon: ({ color, size }) => <Ionicons name="card" color={color} size={size} />,
         }}
       />

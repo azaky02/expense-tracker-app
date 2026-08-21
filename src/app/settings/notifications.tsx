@@ -7,7 +7,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Box } from '@/components/Box';
 import { Text } from '@/components/Text';
-import { useNotificationPreference, useSetDailyLogReminder, useSetExtraDueDateReminders } from '@/features/notifications/hooks';
+import {
+  useNotificationPreference,
+  useSetDailyLogReminder,
+  useSetExtraDueDateReminders,
+  useSetRecurringBillReminders,
+} from '@/features/notifications/hooks';
 import { useAppTheme } from '@/theme/ThemeProvider';
 
 const DAILY_REMINDER_HOUR = 20;
@@ -20,8 +25,10 @@ export default function NotificationSettingsScreen() {
 
   const { data: extraPref } = useNotificationPreference('extraDueDateReminders');
   const { data: dailyPref } = useNotificationPreference('dailyLogReminder');
+  const { data: billPref } = useNotificationPreference('recurringBillReminders');
   const setExtraReminders = useSetExtraDueDateReminders();
   const setDailyReminder = useSetDailyLogReminder();
+  const setBillReminders = useSetRecurringBillReminders();
 
   const extraDays: number[] = useMemo(() => {
     if (!extraPref?.config) return [];
@@ -65,7 +72,7 @@ export default function NotificationSettingsScreen() {
           <Switch value={extraDays.includes(1)} onValueChange={(v) => toggleExtraDay(1, v)} />
         </Box>
 
-        <Box flexDirection="row" alignItems="center" justifyContent="space-between" backgroundColor="surfaceAlt" borderRadius="m" padding="m">
+        <Box flexDirection="row" alignItems="center" justifyContent="space-between" backgroundColor="surfaceAlt" borderRadius="m" padding="m" marginBottom="s">
           <Text variant="body" flex={1}>
             {t('notifications.dailyLogReminder')}
           </Text>
@@ -73,6 +80,13 @@ export default function NotificationSettingsScreen() {
             value={!!dailyPref?.isEnabled}
             onValueChange={(enabled) => setDailyReminder.mutate({ enabled, hour: DAILY_REMINDER_HOUR })}
           />
+        </Box>
+
+        <Box flexDirection="row" alignItems="center" justifyContent="space-between" backgroundColor="surfaceAlt" borderRadius="m" padding="m">
+          <Text variant="body" flex={1}>
+            {t('notifications.recurringBillReminder')}
+          </Text>
+          <Switch value={!!billPref?.isEnabled} onValueChange={(enabled) => setBillReminders.mutate(enabled)} />
         </Box>
       </Box>
     </Box>

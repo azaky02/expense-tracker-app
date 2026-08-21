@@ -69,37 +69,42 @@ const textVariants = {
   },
 };
 
+/**
+ * Single premium black/gold visual identity for the whole app — applied to both the light and
+ * dark theme objects (see below) so the look is consistent regardless of system/user theme
+ * setting, per the reference design the app is meant to match everywhere, not just the dashboard.
+ */
 export const lightTheme = createTheme({
   colors: {
-    mainBackground: palette.grey50,
-    surface: palette.white,
-    surfaceAlt: palette.grey100,
-    border: palette.grey200,
+    mainBackground: palette.onyx950,
+    surface: palette.onyx900,
+    surfaceAlt: palette.onyx850,
+    border: palette.onyxBorder,
 
-    textPrimary: palette.grey900,
-    textSecondary: palette.grey500,
-    textOnDark: palette.white,
-    textOnDarkSecondary: palette.grey300,
+    textPrimary: palette.cream100,
+    textSecondary: palette.cream300,
+    textOnDark: palette.cream100,
+    textOnDarkSecondary: palette.cream300,
 
-    primary: palette.navy800,
-    primaryAlt: palette.navy700,
-    accent: palette.teal600,
-    accentAlt: palette.teal700,
-    warning: palette.orange600,
-    warningSurface: palette.orange100,
-    danger: palette.red500,
-    dangerSurface: palette.red100,
+    primary: palette.onyx900,
+    primaryAlt: palette.onyx850,
+    accent: palette.gold500,
+    accentAlt: palette.gold600,
+    warning: palette.gold500,
+    warningSurface: palette.crimsonSurface,
+    danger: palette.crimson500,
+    dangerSurface: palette.crimsonSurface,
 
-    expense: palette.red600,
-    income: palette.teal700,
+    expense: palette.crimson500,
+    income: palette.emerald500,
 
-    cash: palette.navy900,
-    chip: palette.grey100,
-    chipSelected: palette.teal600,
-    chipSelectedText: palette.white,
+    cash: palette.onyx900,
+    chip: palette.onyx850,
+    chipSelected: palette.gold500,
+    chipSelectedText: palette.onyx950,
 
-    tabIconDefault: palette.grey400,
-    tabIconSelected: palette.teal600,
+    tabIconDefault: palette.cream300,
+    tabIconSelected: palette.gold500,
 
     transparent: 'transparent',
   },
@@ -118,29 +123,4 @@ export const lightTheme = createTheme({
 
 export type Theme = typeof lightTheme;
 
-export const darkTheme: Theme = {
-  ...lightTheme,
-  colors: {
-    ...lightTheme.colors,
-    mainBackground: palette.grey900,
-    surface: palette.grey800,
-    surfaceAlt: palette.grey700,
-    border: palette.grey700,
-
-    textPrimary: palette.grey50,
-    textSecondary: palette.grey400,
-    textOnDark: palette.white,
-    textOnDarkSecondary: palette.grey300,
-
-    primary: palette.navy700,
-    primaryAlt: palette.navy600,
-    accent: palette.teal500,
-    accentAlt: palette.teal600,
-    warningSurface: palette.brown700,
-    dangerSurface: palette.brown700,
-
-    cash: palette.navy900,
-    chip: palette.grey700,
-    chipSelected: palette.teal600,
-  },
-};
+export const darkTheme: Theme = lightTheme;

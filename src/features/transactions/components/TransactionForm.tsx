@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Alert, Image, Pressable, ScrollView, TextInput } from 'react-native';
@@ -11,16 +11,17 @@ import { Chip } from '@/components/Chip';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SegmentedToggle } from '@/components/SegmentedToggle';
 import { Text } from '@/components/Text';
-import { useRecentBeneficiaries } from '@/features/beneficiaries/hooks';
-import { useCards } from '@/features/cards/hooks';
-import { useCategoryTree } from '@/features/categories/hooks';
+import { useAccounts } from '@/features/accounts/hooks';
+import { BeneficiaryPicker } from '@/features/beneficiaries/components/BeneficiaryPicker';
+import { useDefaultBeneficiaryName } from '@/features/beneficiaries/hooks';
+import { CategoryPicker } from '@/features/categories/components/CategoryPicker';
 import { DatePickerModal } from '@/features/dates/components/DatePickerModal';
 import { deleteAttachment, persistAttachment } from '@/lib/attachments';
 import { formatDateForDisplay } from '@/lib/hijri';
 import { useSettingsStore } from '@/state/useSettingsStore';
 import { useAppTheme } from '@/theme/ThemeProvider';
 
-import { transactionFormSchema, type TransactionFormValues } from '../validators';
+import { incomeTypeUiSchema, transactionFormSchema, type TransactionFormValues } from '../validators';
 
 interface TransactionFormProps {
   defaultValues: TransactionFormValues;
@@ -29,13 +30,46 @@ interface TransactionFormProps {
   isSubmitting: boolean;
 }
 
+const INCOME_TYPES = incomeTypeUiSchema.options;
+
+/** Small single-line input used across the compact income sub-fields — kept local since it's
+ * only ever a label + one-line TextInput pair, repeated for Salary/CashReceipt/etc. */
+function CompactField({
+  label,
+  optional,
+  onChangeText,
+  error,
+}: {
+  label: string;
+  optional?: boolean;
+  onChangeText: (text: string) => void;
+  error?: string;
+}) {
+  const { t } = useTranslation();
+  const theme = useAppTheme();
+  return (
+    <Box flex={1}>
+      <Text variant="caption" numberOfLines={1}>
+        {label}
+        {optional ? ` (${t('common.optional')})` : ''}
+      </Text>
+      <Box backgroundColor="surfaceAlt" borderRadius="s" paddingHorizontal="s" style={{ height: 36, justifyContent: 'center' }}>
+        <TextInput onChangeText={onChangeText} style={{ color: theme.colors.textPrimary, fontSize: 13 }} />
+      </Box>
+      {error ? (
+        <Text variant="caption" color="danger">
+          {error}
+        </Text>
+      ) : null}
+    </Box>
+  );
+}
+
 export function TransactionForm({ defaultValues, onSubmit, submitLabel, isSubmitting }: TransactionFormProps) {
   const { t } = useTranslation();
   const theme = useAppTheme();
 
   const calendar = useSettingsStore((s) => s.calendar);
-  const [selectedMainId, setSelectedMainId] = useState<string | null>(null);
-  const [showBeneficiarySuggestions, setShowBeneficiarySuggestions] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const {
@@ -49,32 +83,26 @@ export function TransactionForm({ defaultValues, onSubmit, submitLabel, isSubmit
   });
 
   const type = watch('type');
-  const paymentMethodType = watch('paymentMethodType');
+  const accountId = watch('accountId');
+  const incomeTypeUi = watch('incomeTypeUi');
   const categoryId = watch('categoryId');
-  const cardId = watch('cardId');
   const attachmentUri = watch('attachmentUri');
   const beneficiaryName = watch('beneficiaryName');
   const amount = watch('amount');
   const date = watch('date');
 
-  const { data: categoryTree } = useCategoryTree(type);
-  const { data: cards } = useCards();
-  const { data: recentBeneficiaries } = useRecentBeneficiaries();
+  const { data: accounts } = useAccounts();
+  const { data: defaultBeneficiaryName } = useDefaultBeneficiaryName();
 
-  const resolvedMainId =
-    selectedMainId ?? categoryTree?.find((c) => c.id === categoryId || c.children.some((child) => child.id === categoryId))?.id ?? null;
-  const selectedMain = categoryTree?.find((c) => c.id === resolvedMainId);
+  const isCustody = type === 'Income' && incomeTypeUi === 'Custody';
 
-  function handleMainCategoryPress(mainId: string, hasChildren: boolean) {
-    setSelectedMainId(mainId);
-    if (!hasChildren) {
-      setValue('categoryId', mainId, { shouldValidate: true });
-    } else if (categoryTree) {
-      const main = categoryTree.find((c) => c.id === mainId);
-      const stillValid = main?.children.some((child) => child.id === categoryId);
-      if (!stillValid) setValue('categoryId', '', { shouldValidate: true });
+  // Pre-fill the default beneficiary once, only on a fresh Add (never overwrite an edit's value).
+  useEffect(() => {
+    if (!defaultValues.beneficiaryName && defaultBeneficiaryName && !beneficiaryName) {
+      setValue('beneficiaryName', defaultBeneficiaryName);
     }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultBeneficiaryName]);
 
   async function handlePickImage(source: 'camera' | 'gallery') {
     const permission =
@@ -106,214 +134,205 @@ export function TransactionForm({ defaultValues, onSubmit, submitLabel, isSubmit
   const submit = handleSubmit(onSubmit);
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
-      <Box marginBottom="l">
-        <SegmentedToggle
-          value={type}
-          onChange={(value) => {
-            setValue('type', value);
-            setValue('categoryId', '');
-            setSelectedMainId(null);
-          }}
-          selectedColor="expense"
-          options={[
-            { value: 'Expense', label: t('transactions.expense') },
-            { value: 'Income', label: t('transactions.income') },
-          ]}
-        />
-      </Box>
-
-      <Text variant="caption" marginBottom="xs">
-        {t('transactions.amount')}
-      </Text>
-      <Box backgroundColor="surfaceAlt" borderRadius="m" padding="m" marginBottom="l">
-        <TextInput
-          keyboardType="decimal-pad"
-          placeholder="0.00"
-          defaultValue={amount ? String(amount) : ''}
-          placeholderTextColor={theme.colors.textSecondary}
-          style={{ fontSize: 28, fontWeight: '800', color: theme.colors.textPrimary, textAlign: 'center' }}
-          onChangeText={(text) => setValue('amount', Number(text.replace(/[^0-9.]/g, '')) || 0, { shouldValidate: true })}
-        />
-      </Box>
-      {errors.amount ? (
-        <Text variant="caption" color="danger" marginBottom="s">
-          {errors.amount.message}
-        </Text>
-      ) : null}
-
-      <Text variant="caption" marginBottom="xs">
-        {t('transactions.date')}
-      </Text>
-      <Pressable onPress={() => setShowDatePicker(true)}>
-        <Box backgroundColor="surfaceAlt" borderRadius="m" padding="m" marginBottom="l" flexDirection="row" justifyContent="space-between" alignItems="center">
-          <Text variant="body">{formatDateForDisplay(date, calendar)}</Text>
-          <Ionicons name="calendar-outline" size={20} color={theme.colors.textSecondary} />
-        </Box>
-      </Pressable>
-      <DatePickerModal
-        visible={showDatePicker}
-        isoDate={date}
-        onClose={() => setShowDatePicker(false)}
-        onSelect={(iso) => {
-          setValue('date', iso, { shouldValidate: true });
-          setShowDatePicker(false);
-        }}
-      />
-
-      <Text variant="caption" marginBottom="xs">
-        {t('transactions.category')}
-      </Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-        {(categoryTree ?? []).map((main) => (
-          <Chip
-            key={main.id}
-            icon={main.icon}
-            label={main.name}
-            selected={resolvedMainId === main.id}
-            onPress={() => handleMainCategoryPress(main.id, main.children.length > 0)}
+    <Box flex={1}>
+      <ScrollView contentContainerStyle={{ padding: 14, paddingBottom: 8 }} style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+        <Box marginBottom="s">
+          <SegmentedToggle
+            value={type}
+            onChange={(value) => {
+              setValue('type', value);
+              setValue('categoryId', '');
+              setValue('incomeTypeUi', null);
+            }}
+            selectedColor="expense"
+            options={[
+              { value: 'Expense', label: t('transactions.expense') },
+              { value: 'Income', label: t('transactions.income') },
+            ]}
           />
-        ))}
-      </ScrollView>
-      {selectedMain && selectedMain.children.length > 0 ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 8 }}>
-          {selectedMain.children.map((child) => (
-            <Chip
-              key={child.id}
-              icon={child.icon}
-              label={child.name}
-              selected={categoryId === child.id}
-              onPress={() => setValue('categoryId', child.id, { shouldValidate: true })}
-            />
-          ))}
-        </ScrollView>
-      ) : null}
-      {errors.categoryId ? (
-        <Text variant="caption" color="danger" marginTop="s">
-          {errors.categoryId.message}
-        </Text>
-      ) : null}
+        </Box>
 
-      <Box marginTop="l" marginBottom="l">
-        <Text variant="caption" marginBottom="xs">
-          {t('transactions.paymentMethod')}
-        </Text>
-        <SegmentedToggle
-          value={paymentMethodType}
-          onChange={(value) => {
-            setValue('paymentMethodType', value);
-            if (value === 'Cash') setValue('cardId', null);
+        {/* Amount + Date, side by side */}
+        <Box flexDirection="row" style={{ gap: 10 }} marginBottom="s">
+          <Box flex={1}>
+            <Text variant="caption">{t('transactions.amount')}</Text>
+            <Box backgroundColor="surfaceAlt" borderRadius="m" style={{ height: 48, justifyContent: 'center' }}>
+              <TextInput
+                keyboardType="decimal-pad"
+                placeholder="0.00"
+                defaultValue={amount ? String(amount) : ''}
+                placeholderTextColor={theme.colors.textSecondary}
+                style={{ fontSize: 20, fontWeight: '800', color: theme.colors.textPrimary, textAlign: 'center' }}
+                onChangeText={(text) => setValue('amount', Number(text.replace(/[^0-9.]/g, '')) || 0, { shouldValidate: true })}
+              />
+            </Box>
+            {errors.amount ? (
+              <Text variant="caption" color="danger">
+                {errors.amount.message}
+              </Text>
+            ) : null}
+          </Box>
+
+          <Box flex={1}>
+            <Text variant="caption">{t('transactions.date')}</Text>
+            <Pressable onPress={() => setShowDatePicker(true)}>
+              <Box
+                backgroundColor="surfaceAlt"
+                borderRadius="m"
+                paddingHorizontal="s"
+                flexDirection="row"
+                justifyContent="space-between"
+                alignItems="center"
+                style={{ height: 48 }}
+              >
+                <Text variant="body" numberOfLines={1} style={{ fontSize: 13 }}>
+                  {formatDateForDisplay(date, calendar)}
+                </Text>
+                <Ionicons name="calendar-outline" size={16} color={theme.colors.textSecondary} />
+              </Box>
+            </Pressable>
+          </Box>
+        </Box>
+        <DatePickerModal
+          visible={showDatePicker}
+          isoDate={date}
+          onClose={() => setShowDatePicker(false)}
+          onSelect={(iso) => {
+            setValue('date', iso, { shouldValidate: true });
+            setShowDatePicker(false);
           }}
-          selectedColor="accent"
-          options={[
-            { value: 'Cash', label: t('common.cash'), icon: '💵' },
-            { value: 'Card', label: t('common.card'), icon: '💳' },
-          ]}
         />
-        {paymentMethodType === 'Card' ? (
-          <Box marginTop="s">
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-              {(cards ?? []).map((card) => (
-                <Chip
-                  key={card.id}
-                  label={`${card.nickname} •${card.last4Digits}`}
-                  selected={cardId === card.id}
-                  onPress={() => setValue('cardId', card.id, { shouldValidate: true })}
-                />
-              ))}
-            </ScrollView>
-            {errors.cardId ? (
-              <Text variant="caption" color="danger" marginTop="s">
-                {errors.cardId.message}
+
+        {!isCustody ? (
+          <Box marginBottom="s">
+            <Text variant="caption">{t('transactions.category')}</Text>
+            <CategoryPicker type={type} categoryId={categoryId} onSelect={(id) => setValue('categoryId', id, { shouldValidate: true })} />
+            {errors.categoryId ? (
+              <Text variant="caption" color="danger">
+                {errors.categoryId.message}
               </Text>
             ) : null}
           </Box>
         ) : null}
-      </Box>
 
-      <Text variant="caption" marginBottom="xs">
-        {t('transactions.beneficiary')} ({t('common.optional')})
-      </Text>
-      <Box backgroundColor="surfaceAlt" borderRadius="m" padding="m" marginBottom="s" flexDirection="row" alignItems="center">
-        <TextInput
-          value={beneficiaryName ?? ''}
-          onChangeText={(text) => setValue('beneficiaryName', text)}
-          onFocus={() => setShowBeneficiarySuggestions(true)}
-          placeholder={t('transactions.beneficiaryPlaceholder')}
-          placeholderTextColor={theme.colors.textSecondary}
-          style={{ flex: 1, color: theme.colors.textPrimary }}
-        />
-      </Box>
-      {showBeneficiarySuggestions && (recentBeneficiaries ?? []).length > 0 ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginBottom: 16 }}>
-          {(recentBeneficiaries ?? []).map((name) => (
-            <Chip
-              key={name}
-              label={name}
-              selected={false}
-              onPress={() => {
-                setValue('beneficiaryName', name);
-                setShowBeneficiarySuggestions(false);
-              }}
-            />
-          ))}
-        </ScrollView>
-      ) : (
-        <Box marginBottom="l" />
-      )}
+        {type === 'Income' ? (
+          <Box marginBottom="s">
+            <Text variant="caption">{t('transactions.incomeType')}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+              {INCOME_TYPES.map((option) => (
+                <Chip
+                  key={option}
+                  label={t(`transactions.incomeTypes.${option}`)}
+                  selected={incomeTypeUi === option}
+                  onPress={() => setValue('incomeTypeUi', option, { shouldValidate: true })}
+                />
+              ))}
+            </ScrollView>
+            {errors.incomeTypeUi ? (
+              <Text variant="caption" color="danger">
+                {errors.incomeTypeUi.message}
+              </Text>
+            ) : null}
 
-      <Text variant="caption" marginBottom="xs">
-        {t('transactions.notes')} ({t('common.optional')})
-      </Text>
-      <Box backgroundColor="surfaceAlt" borderRadius="m" padding="m" marginBottom="l">
-        <TextInput
-          multiline
-          numberOfLines={3}
-          defaultValue={defaultValues.note ?? ''}
-          onChangeText={(text) => setValue('note', text)}
-          style={{ color: theme.colors.textPrimary, minHeight: 60, textAlignVertical: 'top' }}
-        />
-      </Box>
-
-      <Text variant="caption" marginBottom="xs">
-        {t('transactions.attachment')} ({t('common.optional')})
-      </Text>
-      <Pressable onPress={handleAttachmentPress}>
-        {attachmentUri ? (
-          <Box>
-            <Image source={{ uri: attachmentUri }} style={{ width: 100, height: 100, borderRadius: 12 }} />
-            <Pressable
-              onPress={async () => {
-                await deleteAttachment(attachmentUri);
-                setValue('attachmentUri', null);
-              }}
-              style={{ position: 'absolute', top: -8, end: -8 }}
-            >
-              <Box backgroundColor="danger" borderRadius="round" width={24} height={24} alignItems="center" justifyContent="center">
-                <Ionicons name="close" size={16} color="white" />
+            {incomeTypeUi === 'Salary' ? (
+              <Box marginTop="xs">
+                <CompactField label={t('transactions.employer')} onChangeText={(text) => setValue('employer', text)} />
               </Box>
-            </Pressable>
-          </Box>
-        ) : (
-          <Box
-            width={100}
-            height={100}
-            borderRadius="m"
-            borderWidth={1}
-            borderStyle="dashed"
-            borderColor="border"
-            alignItems="center"
-            justifyContent="center"
-            marginBottom="l"
-          >
-            <Ionicons name="camera-outline" size={28} color={theme.colors.textSecondary} />
-          </Box>
-        )}
-      </Pressable>
+            ) : null}
 
-      <Box marginTop="l">
+            {incomeTypeUi === 'CashReceipt' || incomeTypeUi === 'Custody' ? (
+              <Box flexDirection="row" style={{ gap: 10 }} marginTop="xs">
+                <CompactField label={t('custody.personName')} onChangeText={(text) => setValue('personName', text)} error={errors.personName?.message} />
+                <CompactField label={t('custody.reason')} optional onChangeText={(text) => setValue('reason', text)} />
+              </Box>
+            ) : null}
+
+            {incomeTypeUi === 'IncomingTransfer' ? (
+              <Box marginTop="xs">
+                <CompactField label={t('transactions.senderName')} onChangeText={(text) => setValue('senderName', text)} />
+              </Box>
+            ) : null}
+
+            {incomeTypeUi === 'Other' ? (
+              <Box marginTop="xs">
+                <CompactField label={t('transactions.source')} onChangeText={(text) => setValue('source', text)} />
+              </Box>
+            ) : null}
+          </Box>
+        ) : null}
+
+        {!isCustody ? (
+          <Box marginBottom="s">
+            <Text variant="caption">{t('transactions.account')}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+              {(accounts ?? []).map((account) => (
+                <Chip
+                  key={account.id}
+                  label={account.name}
+                  selected={accountId === account.id}
+                  onPress={() => setValue('accountId', account.id, { shouldValidate: true })}
+                />
+              ))}
+            </ScrollView>
+            {errors.accountId ? (
+              <Text variant="caption" color="danger">
+                {errors.accountId.message}
+              </Text>
+            ) : null}
+          </Box>
+        ) : null}
+
+        <Box marginBottom="s">
+          <Text variant="caption">
+            {t('transactions.beneficiary')} ({t('common.optional')})
+          </Text>
+          <BeneficiaryPicker value={beneficiaryName} onSelect={(name) => setValue('beneficiaryName', name)} />
+        </Box>
+
+        {/* Notes (single line) + attachment thumbnail, side by side to save vertical space */}
+        <Box flexDirection="row" style={{ gap: 10 }} alignItems="flex-end">
+          <Box flex={1}>
+            <Text variant="caption">
+              {t('transactions.notes')} ({t('common.optional')})
+            </Text>
+            <Box backgroundColor="surfaceAlt" borderRadius="m" paddingHorizontal="s" style={{ height: 40, justifyContent: 'center' }}>
+              <TextInput
+                defaultValue={defaultValues.note ?? ''}
+                onChangeText={(text) => setValue('note', text)}
+                style={{ color: theme.colors.textPrimary, fontSize: 13 }}
+              />
+            </Box>
+          </Box>
+
+          <Pressable onPress={handleAttachmentPress}>
+            {attachmentUri ? (
+              <Box>
+                <Image source={{ uri: attachmentUri }} style={{ width: 40, height: 40, borderRadius: 8 }} />
+                <Pressable
+                  onPress={async () => {
+                    await deleteAttachment(attachmentUri);
+                    setValue('attachmentUri', null);
+                  }}
+                  style={{ position: 'absolute', top: -6, end: -6 }}
+                >
+                  <Box backgroundColor="danger" borderRadius="round" width={16} height={16} alignItems="center" justifyContent="center">
+                    <Ionicons name="close" size={11} color="white" />
+                  </Box>
+                </Pressable>
+              </Box>
+            ) : (
+              <Box width={40} height={40} borderRadius="m" borderWidth={1} borderStyle="dashed" borderColor="border" alignItems="center" justifyContent="center">
+                <Ionicons name="camera-outline" size={18} color={theme.colors.textSecondary} />
+              </Box>
+            )}
+          </Pressable>
+        </Box>
+      </ScrollView>
+
+      {/* Fixed footer so Save is always reachable without scrolling */}
+      <Box padding="m" borderTopWidth={1} borderColor="border" backgroundColor="mainBackground">
         <PrimaryButton label={submitLabel} onPress={submit} loading={isSubmitting} />
       </Box>
-    </ScrollView>
+    </Box>
   );
 }

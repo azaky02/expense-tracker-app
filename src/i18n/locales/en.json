@@ -12,21 +12,37 @@
     "egp": "EGP",
     "today": "Today",
     "loading": "Loading...",
-    "comingSoon": "Coming soon"
+    "comingSoon": "Coming soon",
+    "status": "Status",
+    "default": "Default",
+    "or": "or"
+  },
+  "banks": {
+    "inUseError": "This bank is used by an account and can't be deleted",
+    "defaultError": "Default banks can't be deleted",
+    "newBankPlaceholder": "New bank name"
   },
   "nav": {
     "home": "Home",
     "transactions": "Transactions",
-    "cards": "Cards",
+    "accounts": "Accounts",
     "settings": "Settings"
   },
   "dashboard": {
     "greeting": "Hi, {{name}} 👋",
     "greetingGeneric": "Welcome 👋",
+    "subtitle": "Track your spending and stay in control",
     "totalSpentThisMonth": "Total spent this month",
+    "currentBalance": "Current balance",
+    "allAccounts": "All accounts",
+    "totalExpense": "Total expenses",
     "income": "Income",
     "remaining": "Remaining",
     "expenseByCategory": "Expenses by category",
+    "monthSummary": "This month's summary",
+    "week": "W",
+    "myGoals": "My goals",
+    "myAccounts": "My accounts",
     "recentTransactions": "Recent transactions",
     "dueSoonAlert": "{{cardName}} due in {{days}} days",
     "reports": "Reports"
@@ -48,7 +64,19 @@
     "attachInvoice": "Take a photo of the invoice or pick from gallery",
     "saveTransaction": "Save transaction",
     "quickNote": "Quick note",
-    "monthTotalForCategory": "{{category}} total this month: {{amount}}"
+    "monthTotalForCategory": "{{category}} total this month: {{amount}}",
+    "account": "Account",
+    "incomeType": "Income type",
+    "incomeTypes": {
+      "Salary": "Salary",
+      "CashReceipt": "Cash receipt",
+      "Custody": "Custody",
+      "IncomingTransfer": "Incoming transfer",
+      "Other": "Other"
+    },
+    "employer": "Employer",
+    "senderName": "Sender name",
+    "source": "Source"
   },
   "categories": {
     "food": "Food & Drink",
@@ -57,25 +85,101 @@
     "entertainment": "Entertainment",
     "health": "Health",
     "other": "Other",
-    "manage": "Manage categories"
+    "manage": "Manage categories",
+    "topFive": "Most used",
+    "mainCategory": "Category",
+    "subCategory": "Sub-category",
+    "addNew": "Add new"
   },
   "cards": {
-    "paymentMethods": "Payment methods",
-    "cashSpendThisMonth": "This month's spend: {{amount}}",
-    "addNewCard": "Add new card",
-    "cardDetails": "Card details",
     "creditLimit": "Credit limit",
     "dueDate": "Due date",
     "spendThisMonth": "This month's spend",
-    "cardTransactions": "This card's transactions",
-    "editCard": "Edit card details",
     "bank": "Bank",
     "cardType": "Card type",
-    "cardCategory": "Category",
-    "credit": "Credit",
-    "debit": "Debit",
-    "nickname": "Nickname",
     "last4Digits": "Last 4 digits"
+  },
+  "accounts": {
+    "title": "Accounts",
+    "type": "Account type",
+    "name": "Account name",
+    "addNewAccount": "Add new account",
+    "editAccount": "Edit account",
+    "accountDetails": "Account details",
+    "accountTransactions": "This account's transactions",
+    "deactivateAccount": "Deactivate account",
+    "types": {
+      "CashWallet": "Cash wallet",
+      "BankAccount": "Bank account",
+      "DigitalWallet": "Digital wallet",
+      "CreditCard": "Credit card",
+      "DebitCard": "Debit card",
+      "SavingsAccount": "Savings account"
+    }
+  },
+  "transfers": {
+    "addTransfer": "New transfer",
+    "fromAccount": "From account",
+    "toAccount": "To account"
+  },
+  "recurring": {
+    "title": "Recurring transactions",
+    "addRule": "New recurring transaction",
+    "editRule": "Edit recurring transaction",
+    "nextOccurrenceDate": "Next occurrence date",
+    "name": "Name",
+    "frequency": "Frequency",
+    "frequencies": {
+      "Daily": "Daily",
+      "Weekly": "Weekly",
+      "Monthly": "Monthly",
+      "Yearly": "Yearly",
+      "Custom": "Custom"
+    },
+    "intervalDays": "Repeat every (days)",
+    "startDate": "Start date",
+    "nextOn": "Next on {{date}}",
+    "stop": "Stop recurring"
+  },
+  "bills": {
+    "title": "Bills & upcoming payments",
+    "inDays": "In {{days}} days"
+  },
+  "goals": {
+    "title": "Goals",
+    "addGoal": "New goal",
+    "name": "Goal name",
+    "targetAmount": "Target amount",
+    "targetDate": "Target date",
+    "linkedAccount": "Savings account",
+    "saved": "Saved",
+    "suggestedMonthly": "Suggested monthly saving: {{amount}}"
+  },
+  "forecast": {
+    "title": "Cash flow forecast",
+    "currentBalance": "Current balance",
+    "expectedIncome": "Expected income",
+    "expectedPayments": "Expected payments",
+    "forecastedBalance": "Forecasted end-of-month balance"
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search by note, beneficiary, category, account..."
+  },
+  "custody": {
+    "title": "Custody",
+    "underCustody": "Funds held in custody",
+    "personName": "Person's name",
+    "reason": "Reason",
+    "originalAmount": "Original amount",
+    "remainingAmount": "Remaining amount",
+    "recordReturn": "Record return",
+    "settlementHistory": "Settlement history",
+    "status": {
+      "Open": "Open",
+      "PartiallyReturned": "Partially returned",
+      "Closed": "Closed"
+    }
   },
   "settings": {
     "yourName": "Your name",
@@ -85,7 +189,11 @@
     "notifications": "Notifications",
     "appLock": "App lock",
     "backup": "Backup",
-    "restartToApply": "The app will restart to apply the new language"
+    "restartToApply": "The app will restart to apply the new language",
+    "currencyAndCountry": "Currency & country",
+    "country": "Country",
+    "currency": "Currency",
+    "banks": "Manage banks"
   },
   "dates": {
     "year": "Year",
@@ -98,10 +206,13 @@
     "byPaymentMethod": "Expenses by payment method",
     "monthOverMonth": "Month over month",
     "byBeneficiary": "By beneficiary",
-    "exportPdf": "Export PDF"
+    "exportPdf": "Export PDF",
+    "excelRange": "Excel export range",
+    "exportExcel": "Export Excel"
   },
   "onboarding": {
-    "welcome": "Welcome to My Expenses 👋",
+    "welcome": "Welcome to Mizan 👋",
+    "tagline": "Know your money... balance your life",
     "getStarted": "Get started"
   },
   "backup": {
@@ -122,7 +233,8 @@
     "alwaysOn": "Always on",
     "extraSevenDays": "Extra reminder 7 days before",
     "extraOneDay": "Extra reminder 1 day before",
-    "dailyLogReminder": "Daily reminder to log expenses"
+    "dailyLogReminder": "Daily reminder to log expenses",
+    "recurringBillReminder": "Remind me before recurring bills are due"
   },
   "security": {
     "enterPin": "Enter your PIN",
@@ -134,6 +246,13 @@
     "pinMismatch": "PINs don't match",
     "enableAppLock": "Enable app lock",
     "enableBiometrics": "Enable Face ID / Fingerprint",
-    "pinSetSuccess": "PIN set up successfully"
+    "pinSetSuccess": "PIN set up successfully",
+    "signIn": "Sign in",
+    "forgotPin": "Forgot your PIN?",
+    "forgotPinHelp": "For security, your PIN is encrypted and stored only on this device — there is no way to recover it. You can reinstall the app (this erases local data) or restore from a backup afterwards.",
+    "trustAbsoluteSecurity": "Full security",
+    "trustPrivacyFirst": "Privacy first",
+    "trustOffline": "Works offline",
+    "trustBackup": "Backups"
   }
 }

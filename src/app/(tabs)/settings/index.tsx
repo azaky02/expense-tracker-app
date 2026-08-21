@@ -60,8 +60,16 @@ export default function SettingsScreen() {
         />
       </Box>
 
+      <SettingsRow icon="search" label={t('search.title')} onPress={() => router.push('/search')} />
+      <SettingsRow icon="hand-left" label={t('custody.title')} onPress={() => router.push('/custody')} />
+      <SettingsRow icon="repeat" label={t('recurring.title')} onPress={() => router.push('/recurring')} />
+      <SettingsRow icon="receipt" label={t('bills.title')} onPress={() => router.push('/bills')} />
+      <SettingsRow icon="flag" label={t('goals.title')} onPress={() => router.push('/goals')} />
+      <SettingsRow icon="trending-up" label={t('forecast.title')} onPress={() => router.push('/forecast')} />
       <SettingsRow icon="pricetags" label={t('categories.manage')} onPress={() => router.push('/settings/categories')} />
       <SettingsRow icon="language" label={t('settings.language')} onPress={() => router.push('/settings/language')} />
+      <SettingsRow icon="cash" label={t('settings.currencyAndCountry')} onPress={() => router.push('/settings/currency')} />
+      <SettingsRow icon="business" label={t('settings.banks')} onPress={() => router.push('/settings/banks')} />
       <SettingsRow icon="calendar" label={t('settings.calendar')} onPress={() => router.push('/settings/calendar')} />
       <SettingsRow icon="notifications" label={t('settings.notifications')} onPress={() => router.push('/settings/notifications')} />
       <SettingsRow icon="lock-closed" label={t('settings.appLock')} onPress={() => router.push('/settings/appLock')} />

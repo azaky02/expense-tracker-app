@@ -1,12 +1,13 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, FlatList, Pressable } from 'react-native';
+import { Alert, FlatList, Pressable, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Box } from '@/components/Box';
 import { Chip } from '@/components/Chip';
 import { Text } from '@/components/Text';
+import { useAccounts } from '@/features/accounts/hooks';
 import { useCategoryTree } from '@/features/categories/hooks';
 import { QuickNoteModal } from '@/features/transactions/components/QuickNoteModal';
 import { useCategoryMonthTotal, useTransactionsList, useUpdateTransactionNote } from '@/features/transactions/hooks';
@@ -16,8 +17,6 @@ import { getMonthRange } from '@/lib/dates';
 import { formatDateForDisplay } from '@/lib/hijri';
 import { useDoubleTap } from '@/lib/useDoubleTap';
 import { useSettingsStore } from '@/state/useSettingsStore';
-
-type PaymentFilter = 'All' | 'Cash' | 'Card';
 
 function TransactionRow({
   item,
@@ -30,7 +29,6 @@ function TransactionRow({
   onQuickNote: () => void;
   onShowCategoryTotal: () => void;
 }) {
-  const { t } = useTranslation();
   const calendar = useSettingsStore((s) => s.calendar);
   const isExpense = item.type === 'Expense';
   const handlePress = useDoubleTap(onOpen, onShowCategoryTotal);
@@ -44,7 +42,7 @@ function TransactionRow({
         <Box flex={1}>
           <Text variant="subtitle">{item.beneficiaryName || item.categoryName}</Text>
           <Text variant="caption">
-            {formatDateForDisplay(item.date, calendar)} · {item.paymentMethodType === 'Cash' ? t('common.cash') : item.cardNickname}
+            {formatDateForDisplay(item.date, calendar)} · {item.accountName}
             {item.note ? ' · 📝' : ''}
           </Text>
         </Box>
@@ -61,12 +59,13 @@ export default function TransactionsListScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('All');
+  const [accountFilterId, setAccountFilterId] = useState<string | null>(null);
   const [categoryFilterId, setCategoryFilterId] = useState<string | null>(null);
   const [quickNoteTarget, setQuickNoteTarget] = useState<TransactionListItem | null>(null);
   const [categoryTotalTarget, setCategoryTotalTarget] = useState<TransactionListItem | null>(null);
 
   const { data: categoryTree } = useCategoryTree();
+  const { data: accounts } = useAccounts();
   const updateNote = useUpdateTransactionNote();
   const { start, end } = useMemo(() => getMonthRange(), []);
 
@@ -78,7 +77,7 @@ export default function TransactionsListScreen() {
   }, [categoryFilterId, categoryTree]);
 
   const { data: transactions } = useTransactionsList({
-    paymentMethodType: paymentFilter === 'All' ? undefined : paymentFilter,
+    accountId: accountFilterId ?? undefined,
     categoryIds,
   });
 
@@ -110,16 +109,17 @@ export default function TransactionsListScreen() {
         <Text variant="header" marginBottom="m">
           {t('nav.transactions')}
         </Text>
-        <Box flexDirection="row" style={{ gap: 8 }} marginBottom="s">
-          {(['All', 'Cash', 'Card'] as PaymentFilter[]).map((option) => (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginBottom: 8 }}>
+          <Chip label={t('common.all')} selected={accountFilterId === null} onPress={() => setAccountFilterId(null)} />
+          {(accounts ?? []).map((account) => (
             <Chip
-              key={option}
-              label={option === 'All' ? t('common.all') : t(`common.${option.toLowerCase()}`)}
-              selected={paymentFilter === option}
-              onPress={() => setPaymentFilter(option)}
+              key={account.id}
+              label={account.name}
+              selected={accountFilterId === account.id}
+              onPress={() => setAccountFilterId(accountFilterId === account.id ? null : account.id)}
             />
           ))}
-        </Box>
+        </ScrollView>
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}

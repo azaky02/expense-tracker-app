@@ -2,7 +2,7 @@ import * as Crypto from 'expo-crypto';
 import { and, desc, eq, gte, inArray, lte, sum } from 'drizzle-orm';
 
 import { db } from '@/db';
-import { beneficiaries, cards, categories, transactions } from '@/db/schema';
+import { accounts, beneficiaries, categories, incomeDetails, transactions } from '@/db/schema';
 
 import type { CategoryBreakdownItem, TransactionInput, TransactionListItem } from './types';
 
@@ -26,13 +26,13 @@ const listSelection = {
   note: transactions.note,
   attachmentUri: transactions.attachmentUri,
   beneficiaryName: transactions.beneficiaryName,
-  paymentMethodType: transactions.paymentMethodType,
+  incomeType: transactions.incomeType,
   categoryId: transactions.categoryId,
   categoryName: categories.name,
   categoryIcon: categories.icon,
   categoryColor: categories.color,
-  cardId: transactions.cardId,
-  cardNickname: cards.nickname,
+  accountId: transactions.accountId,
+  accountName: accounts.name,
 };
 
 function baseListQuery() {
@@ -40,7 +40,27 @@ function baseListQuery() {
     .select(listSelection)
     .from(transactions)
     .leftJoin(categories, eq(transactions.categoryId, categories.id))
-    .leftJoin(cards, eq(transactions.cardId, cards.id));
+    .leftJoin(accounts, eq(transactions.accountId, accounts.id));
+}
+
+async function upsertIncomeDetails(transactionId: string, input: TransactionInput): Promise<void> {
+  await db.delete(incomeDetails).where(eq(incomeDetails.transactionId, transactionId));
+  if (input.type !== 'Income' || !input.incomeDetails) return;
+  const d = input.incomeDetails;
+  const hasAnyField = Object.values(d).some((v) => v != null && v !== '');
+  if (!hasAnyField) return;
+  await db.insert(incomeDetails).values({
+    transactionId,
+    personId: d.personId ?? null,
+    employer: d.employer ?? null,
+    payPeriod: d.payPeriod ?? null,
+    employerDueDate: d.employerDueDate ?? null,
+    reason: d.reason ?? null,
+    senderName: d.senderName ?? null,
+    referenceNote: d.referenceNote ?? null,
+    source: d.source ?? null,
+    description: d.description ?? null,
+  });
 }
 
 export async function createTransaction(input: TransactionInput): Promise<string> {
@@ -50,13 +70,14 @@ export async function createTransaction(input: TransactionInput): Promise<string
     amount: input.amount,
     type: input.type,
     categoryId: input.categoryId,
-    paymentMethodType: input.paymentMethodType,
-    cardId: input.paymentMethodType === 'Card' ? (input.cardId ?? null) : null,
+    accountId: input.accountId,
+    incomeType: input.type === 'Income' ? (input.incomeType ?? null) : null,
     date: input.date,
     note: input.note ?? null,
     attachmentUri: input.attachmentUri ?? null,
     beneficiaryName: input.beneficiaryName ?? null,
   });
+  await upsertIncomeDetails(id, input);
   await upsertBeneficiary(input.beneficiaryName);
   return id;
 }
@@ -68,14 +89,15 @@ export async function updateTransaction(id: string, input: TransactionInput): Pr
       amount: input.amount,
       type: input.type,
       categoryId: input.categoryId,
-      paymentMethodType: input.paymentMethodType,
-      cardId: input.paymentMethodType === 'Card' ? (input.cardId ?? null) : null,
+      accountId: input.accountId,
+      incomeType: input.type === 'Income' ? (input.incomeType ?? null) : null,
       date: input.date,
       note: input.note ?? null,
       attachmentUri: input.attachmentUri ?? null,
       beneficiaryName: input.beneficiaryName ?? null,
     })
     .where(eq(transactions.id, id));
+  await upsertIncomeDetails(id, input);
   await upsertBeneficiary(input.beneficiaryName);
 }
 
@@ -100,8 +122,7 @@ export async function getRecentTransactions(limit: number): Promise<TransactionL
 export interface TransactionFilters {
   /** Pass the main category's id plus all its children's ids to filter "this category or any of its sub-categories". */
   categoryIds?: string[];
-  paymentMethodType?: 'Cash' | 'Card';
-  cardId?: string;
+  accountId?: string;
   dateStart?: string;
   dateEnd?: string;
 }
@@ -109,8 +130,7 @@ export interface TransactionFilters {
 export async function listTransactions(filters: TransactionFilters = {}): Promise<TransactionListItem[]> {
   const conditions = [];
   if (filters.categoryIds && filters.categoryIds.length > 0) conditions.push(inArray(transactions.categoryId, filters.categoryIds));
-  if (filters.paymentMethodType) conditions.push(eq(transactions.paymentMethodType, filters.paymentMethodType));
-  if (filters.cardId) conditions.push(eq(transactions.cardId, filters.cardId));
+  if (filters.accountId) conditions.push(eq(transactions.accountId, filters.accountId));
   if (filters.dateStart) conditions.push(gte(transactions.date, filters.dateStart));
   if (filters.dateEnd) conditions.push(lte(transactions.date, filters.dateEnd));
 
@@ -204,72 +224,42 @@ export async function getCategoryGroupMonthTotal(categoryIds: string[], monthSta
   return Number(row?.total ?? 0);
 }
 
-export async function getCardMonthSpend(cardId: string, monthStart: string, monthEnd: string): Promise<number> {
-  const [row] = await db
-    .select({ total: sum(transactions.amount) })
-    .from(transactions)
-    .where(
-      and(
-        eq(transactions.cardId, cardId),
-        eq(transactions.type, 'Expense'),
-        gte(transactions.date, monthStart),
-        lte(transactions.date, monthEnd)
-      )
-    );
-  return Number(row?.total ?? 0);
-}
-
-export async function getCashMonthSpend(monthStart: string, monthEnd: string): Promise<number> {
-  const [row] = await db
-    .select({ total: sum(transactions.amount) })
-    .from(transactions)
-    .where(
-      and(
-        eq(transactions.paymentMethodType, 'Cash'),
-        eq(transactions.type, 'Expense'),
-        gte(transactions.date, monthStart),
-        lte(transactions.date, monthEnd)
-      )
-    );
-  return Number(row?.total ?? 0);
-}
-
-export async function getCardTransactions(cardId: string): Promise<TransactionListItem[]> {
-  const rows = await baseListQuery().where(eq(transactions.cardId, cardId)).orderBy(desc(transactions.date));
+export async function getAccountTransactions(accountId: string): Promise<TransactionListItem[]> {
+  const rows = await baseListQuery().where(eq(transactions.accountId, accountId)).orderBy(desc(transactions.date));
   return rows as TransactionListItem[];
 }
 
-export interface PaymentMethodBreakdownItem {
+export interface AccountBreakdownItem {
   label: string;
-  cardId: string | null;
+  accountId: string;
   color: string;
   total: number;
 }
 
-/** Cash vs. each card's spend for the month (FR-6.3). */
-export async function getExpenseByPaymentMethod(monthStart: string, monthEnd: string): Promise<PaymentMethodBreakdownItem[]> {
+/** Spend per account for the month (FR-6.3, was "by payment method"). */
+export async function getExpenseByAccount(monthStart: string, monthEnd: string): Promise<AccountBreakdownItem[]> {
   const rows = await db
     .select({
       amount: transactions.amount,
-      cardId: transactions.cardId,
-      cardNickname: cards.nickname,
-      cardColor: cards.color,
+      accountId: transactions.accountId,
+      accountName: accounts.name,
+      accountColor: accounts.color,
     })
     .from(transactions)
-    .leftJoin(cards, eq(transactions.cardId, cards.id))
+    .leftJoin(accounts, eq(transactions.accountId, accounts.id))
     .where(and(eq(transactions.type, 'Expense'), gte(transactions.date, monthStart), lte(transactions.date, monthEnd)));
 
-  const totals = new Map<string, PaymentMethodBreakdownItem>();
+  const totals = new Map<string, AccountBreakdownItem>();
   for (const row of rows) {
-    const key = row.cardId ?? 'cash';
+    const key = row.accountId;
     const existing = totals.get(key);
     if (existing) {
       existing.total += row.amount;
     } else {
       totals.set(key, {
-        label: row.cardId ? (row.cardNickname ?? '') : 'cash',
-        cardId: row.cardId,
-        color: row.cardColor ?? '',
+        label: row.accountName ?? '',
+        accountId: key,
+        color: row.accountColor ?? '',
         total: row.amount,
       });
     }
@@ -318,3 +308,64 @@ export async function getBeneficiaryBreakdown(monthStart: string, monthEnd: stri
     .map(([beneficiaryName, total]) => ({ beneficiaryName, total }))
     .sort((a, b) => b.total - a.total);
 }
+
+export interface MonthComparison {
+  current: MonthSummary;
+  previous: MonthSummary;
+  incomeChangePct: number | null;
+  expenseChangePct: number | null;
+  remainingChangePct: number | null;
+}
+
+function pctChange(current: number, previous: number): number | null {
+  if (previous === 0) return current === 0 ? 0 : null;
+  return ((current - previous) / Math.abs(previous)) * 100;
+}
+
+/** Current month vs. the prior month — powers the "X% from last month" chips on the dashboard. */
+export async function getMonthComparison(monthStart: string, monthEnd: string, reference: Date = new Date()): Promise<MonthComparison> {
+  const prevReference = new Date(reference.getFullYear(), reference.getMonth() - 1, 1);
+  const prevMonthKey = `${prevReference.getFullYear()}-${String(prevReference.getMonth() + 1).padStart(2, '0')}`;
+  const current = await getMonthSummary(monthStart, monthEnd);
+  const previous = await getMonthSummary(`${prevMonthKey}-01`, `${prevMonthKey}-31`);
+
+  return {
+    current,
+    previous,
+    incomeChangePct: pctChange(current.income, previous.income),
+    expenseChangePct: pctChange(current.expense, previous.expense),
+    remainingChangePct: pctChange(current.income - current.expense, previous.income - previous.expense),
+  };
+}
+
+export interface WeekBucket {
+  label: string; // e.g. 'W1'
+  income: number;
+  expense: number;
+}
+
+/** Splits the given month into four ~7-day buckets by day-of-month — a simple, deterministic
+ * approximation of "week of the month" for the dashboard's weekly income/expense chart. */
+export async function getWeeklyTotals(monthStart: string, monthEnd: string): Promise<WeekBucket[]> {
+  const rows = await db
+    .select({ amount: transactions.amount, type: transactions.type, date: transactions.date })
+    .from(transactions)
+    .where(and(gte(transactions.date, monthStart), lte(transactions.date, monthEnd)));
+
+  const buckets: WeekBucket[] = [
+    { label: 'W1', income: 0, expense: 0 },
+    { label: 'W2', income: 0, expense: 0 },
+    { label: 'W3', income: 0, expense: 0 },
+    { label: 'W4', income: 0, expense: 0 },
+  ];
+
+  for (const row of rows) {
+    const day = Number(row.date.slice(8, 10));
+    const bucketIndex = Math.min(3, Math.floor((day - 1) / 7));
+    if (row.type === 'Income') buckets[bucketIndex].income += row.amount;
+    else buckets[bucketIndex].expense += row.amount;
+  }
+
+  return buckets;
+}
+

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Expense Tracker",
+    "name": "ميزان",
     "slug": "expense-tracker-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -22,7 +22,12 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "output": "static",
@@ -33,9 +38,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#0F2A47",
+          "backgroundColor": "#0B0B0D",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 120
         }
       ],
       "expo-secure-store",
@@ -64,6 +69,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "38b63b1c-b5bc-4fec-9c86-38e7d90bf356"
+      }
+    },
+    "owner": "azaky02"
   }
 }

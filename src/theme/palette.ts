@@ -35,4 +35,24 @@ export const palette = {
   grey700: '#333A42',
   grey800: '#20252B',
   grey900: '#15181C',
+
+  // Premium black/gold palette — the app's single visual identity (see theme.ts), independent
+  // of light/dark system setting per the user's request to apply this look everywhere.
+  onyx950: '#0B0B0D',
+  onyx900: '#141414',
+  onyx850: '#1B1B1B',
+  onyx800: '#232323',
+  onyxBorder: '#3A2E12',
+
+  gold500: '#D9B65C',
+  gold600: '#C9A24A',
+  goldSoft: 'rgba(217,182,92,0.15)',
+
+  cream100: '#F5F1E6',
+  cream300: '#9C9689',
+
+  emerald500: '#3FC97B',
+  emeraldSurface: 'rgba(63,201,123,0.12)',
+  crimson500: '#E4574C',
+  crimsonSurface: 'rgba(228,87,76,0.12)',
 };

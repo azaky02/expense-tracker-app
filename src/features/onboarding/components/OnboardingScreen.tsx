@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TextInput } from 'react-native';
 
+import { AppLogo } from '@/components/AppLogo';
 import { Box } from '@/components/Box';
 import { Chip } from '@/components/Chip';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -32,8 +33,14 @@ export function OnboardingScreen() {
 
   return (
     <Box flex={1} backgroundColor="mainBackground" padding="l" justifyContent="center">
-      <Text variant="header" marginBottom="l">
+      <Box alignItems="center" marginBottom="l">
+        <AppLogo size={84} />
+      </Box>
+      <Text variant="header" marginBottom="xs" textAlign="center">
         {t('onboarding.welcome')}
+      </Text>
+      <Text variant="caption" textAlign="center" marginBottom="l">
+        {t('onboarding.tagline')}
       </Text>
 
       <Text variant="caption" marginBottom="xs">

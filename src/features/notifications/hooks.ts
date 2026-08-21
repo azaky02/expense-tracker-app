@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { applyLogReminderPreference, reconcileAllCardNotifications } from '@/lib/notifications/scheduler';
+import { applyLogReminderPreference, reconcileAllAccountNotifications, reconcileAllRecurringRuleNotifications } from '@/lib/notifications/scheduler';
 
 import { getNotificationPreference, setNotificationPreference } from './api';
 
@@ -20,7 +20,20 @@ export function useSetExtraDueDateReminders() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: keys.preference('extraDueDateReminders') });
-      await reconcileAllCardNotifications();
+      await reconcileAllAccountNotifications();
+    },
+  });
+}
+
+export function useSetRecurringBillReminders() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (enabled: boolean) => {
+      await setNotificationPreference('recurringBillReminders', enabled, { daysBefore: 1 });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: keys.preference('recurringBillReminders') });
+      await reconcileAllRecurringRuleNotifications();
     },
   });
 }

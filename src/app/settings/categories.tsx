@@ -9,6 +9,7 @@ import { Box } from '@/components/Box';
 import { SegmentedToggle } from '@/components/SegmentedToggle';
 import { Text } from '@/components/Text';
 import { BudgetModal } from '@/features/budgets/components/BudgetModal';
+import { CategoryBudgetBadge } from '@/features/budgets/components/CategoryBudgetBadge';
 import { CategoryEditModal, type CategoryEditValues } from '@/features/categories/components/CategoryEditModal';
 import { useCategoryTree, useCreateCategory, useDeleteCategory, useUpdateCategory } from '@/features/categories/hooks';
 import type { CategoryRecord } from '@/features/categories/types';
@@ -84,6 +85,7 @@ export default function CategoriesScreen() {
               <Text variant="subtitle" flex={1}>
                 {main.name}
               </Text>
+              {type === 'Expense' ? <CategoryBudgetBadge categoryId={main.id} /> : null}
               {type === 'Expense' ? (
                 <Pressable onPress={() => setBudgetTarget(main)} style={{ marginEnd: 12 }}>
                   <Ionicons name="wallet-outline" size={18} color={theme.colors.textSecondary} />

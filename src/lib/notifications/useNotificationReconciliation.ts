@@ -1,17 +1,23 @@
 import { useEffect, useRef } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
-import { reconcileAllCardNotifications } from './scheduler';
+import { reconcileAllAccountNotifications, reconcileAllRecurringRuleNotifications } from './scheduler';
 import { requestNotificationPermissions } from './setup';
 
-/** Re-schedules every card's due-date reminders on cold start and whenever the app returns to the
- * foreground — the mandatory reminder can't rely on background execution to stay accurate. */
+async function reconcileAll(): Promise<void> {
+  await reconcileAllAccountNotifications();
+  await reconcileAllRecurringRuleNotifications();
+}
+
+/** Re-schedules every card's due-date reminders and recurring-bill reminders on cold start and
+ * whenever the app returns to the foreground — mandatory reminders can't rely on background
+ * execution to stay accurate. */
 export function useNotificationReconciliation() {
   const appState = useRef<AppStateStatus>(AppState.currentState);
 
   useEffect(() => {
     void requestNotificationPermissions().then((granted) => {
-      if (granted) void reconcileAllCardNotifications();
+      if (granted) void reconcileAll();
     });
   }, []);
 
@@ -19,7 +25,7 @@ export function useNotificationReconciliation() {
     const subscription = AppState.addEventListener('change', (nextState) => {
       const isForegrounding = appState.current !== 'active' && nextState === 'active';
       if (isForegrounding) {
-        void reconcileAllCardNotifications();
+        void reconcileAll();
       }
       appState.current = nextState;
     });

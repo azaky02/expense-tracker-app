@@ -12,7 +12,7 @@ import { Box } from '@/components/Box';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Text } from '@/components/Text';
 import { exportBackup, importBackup } from '@/features/backup/api';
-import { reconcileAllCardNotifications } from '@/lib/notifications/scheduler';
+import { reconcileAllAccountNotifications, reconcileAllRecurringRuleNotifications } from '@/lib/notifications/scheduler';
 import { useAppTheme } from '@/theme/ThemeProvider';
 
 export default function BackupSettingsScreen() {
@@ -48,7 +48,8 @@ export default function BackupSettingsScreen() {
           try {
             await importBackup(result.assets[0].uri);
             await queryClient.invalidateQueries();
-            await reconcileAllCardNotifications();
+            await reconcileAllAccountNotifications();
+            await reconcileAllRecurringRuleNotifications();
             Alert.alert(t('backup.importSuccess'));
           } finally {
             setIsBusy(false);

@@ -4,10 +4,10 @@ import { Pressable } from 'react-native';
 
 import { Box } from '@/components/Box';
 import { Text } from '@/components/Text';
-import { useAppTheme } from '@/theme/ThemeProvider';
 
 const PIN_LENGTH = 4;
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'backspace'];
+const gold = '#D9B65C';
 
 interface PinPadProps {
   value: string;
@@ -15,8 +15,6 @@ interface PinPadProps {
 }
 
 export function PinPad({ value, onChange }: PinPadProps) {
-  const theme = useAppTheme();
-
   function handleKeyPress(key: string) {
     if (key === 'backspace') {
       onChange(value.slice(0, -1));
@@ -27,24 +25,28 @@ export function PinPad({ value, onChange }: PinPadProps) {
 
   return (
     <Box alignItems="center">
-      <Box flexDirection="row" style={{ gap: 16 }} marginBottom="xl">
+      <Box flexDirection="row" style={{ gap: 12 }} marginBottom="l">
         {Array.from({ length: PIN_LENGTH }).map((_, i) => (
           <Box
             key={i}
-            width={16}
-            height={16}
-            borderRadius="round"
-            style={{ backgroundColor: i < value.length ? theme.colors.accent : theme.colors.chip }}
-          />
+            width={52}
+            height={52}
+            borderRadius="m"
+            alignItems="center"
+            justifyContent="center"
+            style={{ borderWidth: 1.5, borderColor: gold, backgroundColor: 'rgba(217,182,92,0.06)' }}
+          >
+            {i < value.length ? <Box width={10} height={10} borderRadius="round" style={{ backgroundColor: gold }} /> : null}
+          </Box>
         ))}
       </Box>
       <Box flexDirection="row" flexWrap="wrap" style={{ width: 240 }}>
         {KEYS.map((key, i) => (
           <Pressable key={i} onPress={() => handleKeyPress(key)} disabled={!key} style={{ width: 80, height: 64, alignItems: 'center', justifyContent: 'center' }}>
             {key === 'backspace' ? (
-              <Ionicons name="backspace-outline" size={24} color={theme.colors.textPrimary} />
+              <Ionicons name="backspace-outline" size={22} color="#F5F1E6" />
             ) : (
-              <Text variant="title">{key}</Text>
+              <Text style={{ color: '#F5F1E6', fontSize: 22, fontWeight: '700' }}>{key}</Text>
             )}
           </Pressable>
         ))}

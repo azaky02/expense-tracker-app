@@ -5,9 +5,12 @@ import { Modal, Switch, TextInput } from 'react-native';
 import { Box } from '@/components/Box';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Text } from '@/components/Text';
+import { useCategoryMonthTotal } from '@/features/transactions/hooks';
+import { getMonthRange } from '@/lib/dates';
 import { useAppTheme } from '@/theme/ThemeProvider';
 
 import { useCategoryBudget, useSetCategoryBudget } from '../hooks';
+import { BudgetProgressBar } from './BudgetProgressBar';
 
 interface BudgetModalProps {
   categoryId: string;
@@ -20,9 +23,12 @@ export function BudgetModal({ categoryId, categoryName, onClose }: BudgetModalPr
   const theme = useAppTheme();
   const { data: budget } = useCategoryBudget(categoryId);
   const setBudget = useSetCategoryBudget();
+  const { start, end } = getMonthRange();
+  const { data: spent } = useCategoryMonthTotal(categoryId, start, end);
 
   const [isEnabled, setIsEnabled] = useState(budget?.isEnabled ?? false);
   const [limitText, setLimitText] = useState(budget?.monthlyLimit ? String(budget.monthlyLimit) : '');
+  const limit = Number(limitText) || 0;
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
@@ -47,6 +53,12 @@ export function BudgetModal({ categoryId, categoryName, onClose }: BudgetModalPr
               style={{ color: theme.colors.textPrimary }}
             />
           </Box>
+
+          {isEnabled && limit > 0 ? (
+            <Box marginBottom="l">
+              <BudgetProgressBar spent={spent ?? 0} limit={limit} />
+            </Box>
+          ) : null}
 
           <Box flexDirection="row" style={{ gap: 12 }}>
             <Box flex={1}>

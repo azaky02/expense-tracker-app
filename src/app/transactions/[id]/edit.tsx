@@ -7,6 +7,7 @@ import { Box } from '@/components/Box';
 import { Text } from '@/components/Text';
 import { TransactionForm } from '@/features/transactions/components/TransactionForm';
 import { useDeleteTransaction, useTransaction, useUpdateTransaction } from '@/features/transactions/hooks';
+import { toTransactionInput } from '@/features/transactions/submission';
 import { deleteAttachment } from '@/lib/attachments';
 
 export default function EditTransactionScreen() {
@@ -53,15 +54,15 @@ export default function EditTransactionScreen() {
           amount: transaction.amount,
           type: transaction.type,
           categoryId: transaction.categoryId,
-          paymentMethodType: transaction.paymentMethodType,
-          cardId: transaction.cardId,
+          accountId: transaction.accountId,
+          incomeTypeUi: transaction.incomeType,
           date: transaction.date,
           note: transaction.note ?? '',
           attachmentUri: transaction.attachmentUri,
           beneficiaryName: transaction.beneficiaryName ?? '',
         }}
         onSubmit={async (values) => {
-          await updateTransaction.mutateAsync({ id, input: values });
+          await updateTransaction.mutateAsync({ id, input: await toTransactionInput(values) });
           router.back();
         }}
       />

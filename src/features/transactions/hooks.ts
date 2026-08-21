@@ -1,22 +1,23 @@
 import * as Crypto from 'expo-crypto';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { getAccountMonthSpend } from '@/features/accounts/api';
 import { evaluateBudgetForTransaction } from '@/features/budgets/evaluate';
 
 import {
   createTransaction,
   deleteTransaction,
+  getAccountTransactions,
   getBeneficiaryBreakdown,
-  getCardMonthSpend,
-  getCardTransactions,
-  getCashMonthSpend,
   getCategoryMonthTotal,
-  getExpenseByPaymentMethod,
+  getExpenseByAccount,
   getExpenseCategoryBreakdown,
+  getMonthComparison,
   getMonthOverMonthTotals,
   getMonthSummary,
   getRecentTransactions,
   getTransaction,
+  getWeeklyTotals,
   listTransactions,
   updateTransaction,
   updateTransactionNote,
@@ -32,20 +33,19 @@ const keys = {
   categoryBreakdown: (start: string, end: string) => ['transactions', 'category-breakdown', start, end] as const,
   categoryMonthTotal: (categoryId: string, start: string, end: string) =>
     ['transactions', 'category-month-total', categoryId, start, end] as const,
-  cardMonthSpend: (cardId: string, start: string, end: string) =>
-    ['transactions', 'card-month-spend', cardId, start, end] as const,
-  cashMonthSpend: (start: string, end: string) => ['transactions', 'cash-month-spend', start, end] as const,
-  cardTransactions: (cardId: string) => ['transactions', 'card', cardId] as const,
+  accountMonthSpend: (accountId: string, start: string, end: string) =>
+    ['transactions', 'account-month-spend', accountId, start, end] as const,
+  accountTransactions: (accountId: string) => ['transactions', 'account', accountId] as const,
   detail: (id: string) => ['transactions', 'detail', id] as const,
-  paymentMethodBreakdown: (start: string, end: string) => ['transactions', 'payment-method-breakdown', start, end] as const,
+  accountBreakdown: (start: string, end: string) => ['transactions', 'account-breakdown', start, end] as const,
   monthOverMonth: (monthsBack: number) => ['transactions', 'month-over-month', monthsBack] as const,
   beneficiaryBreakdown: (start: string, end: string) => ['transactions', 'beneficiary-breakdown', start, end] as const,
 };
 
-export function useExpenseByPaymentMethod(start: string, end: string) {
+export function useExpenseByAccount(start: string, end: string) {
   return useQuery({
-    queryKey: keys.paymentMethodBreakdown(start, end),
-    queryFn: () => getExpenseByPaymentMethod(start, end),
+    queryKey: keys.accountBreakdown(start, end),
+    queryFn: () => getExpenseByAccount(start, end),
   });
 }
 
@@ -73,6 +73,14 @@ export function useMonthSummary(start: string, end: string) {
   return useQuery({ queryKey: keys.monthSummary(start, end), queryFn: () => getMonthSummary(start, end) });
 }
 
+export function useMonthComparison(start: string, end: string) {
+  return useQuery({ queryKey: [...keys.monthSummary(start, end), 'comparison'], queryFn: () => getMonthComparison(start, end) });
+}
+
+export function useWeeklyTotals(start: string, end: string) {
+  return useQuery({ queryKey: [...keys.monthSummary(start, end), 'weekly'], queryFn: () => getWeeklyTotals(start, end) });
+}
+
 export function useExpenseCategoryBreakdown(start: string, end: string) {
   return useQuery({
     queryKey: keys.categoryBreakdown(start, end),
@@ -88,21 +96,21 @@ export function useCategoryMonthTotal(categoryId: string, start: string, end: st
   });
 }
 
-export function useCardMonthSpend(cardId: string, start: string, end: string) {
-  return useQuery({ queryKey: keys.cardMonthSpend(cardId, start, end), queryFn: () => getCardMonthSpend(cardId, start, end) });
+export function useAccountMonthSpend(accountId: string, start: string, end: string) {
+  return useQuery({
+    queryKey: keys.accountMonthSpend(accountId, start, end),
+    queryFn: () => getAccountMonthSpend(accountId, start, end),
+  });
 }
 
-export function useCashMonthSpend(start: string, end: string) {
-  return useQuery({ queryKey: keys.cashMonthSpend(start, end), queryFn: () => getCashMonthSpend(start, end) });
-}
-
-export function useCardTransactions(cardId: string) {
-  return useQuery({ queryKey: keys.cardTransactions(cardId), queryFn: () => getCardTransactions(cardId) });
+export function useAccountTransactions(accountId: string) {
+  return useQuery({ queryKey: keys.accountTransactions(accountId), queryFn: () => getAccountTransactions(accountId) });
 }
 
 function invalidateAllTransactionData(queryClient: ReturnType<typeof useQueryClient>) {
   void queryClient.invalidateQueries({ queryKey: keys.root });
   void queryClient.invalidateQueries({ queryKey: ['beneficiaries'] });
+  void queryClient.invalidateQueries({ queryKey: ['accounts'] });
 }
 
 /**
@@ -125,13 +133,13 @@ export function useCreateTransaction() {
         note: input.note ?? null,
         attachmentUri: input.attachmentUri ?? null,
         beneficiaryName: input.beneficiaryName ?? null,
-        paymentMethodType: input.paymentMethodType,
         categoryId: input.categoryId,
         categoryName: '',
         categoryIcon: '',
         categoryColor: '',
-        cardId: input.cardId ?? null,
-        cardNickname: null,
+        accountId: input.accountId,
+        accountName: null,
+        incomeType: input.incomeType ?? null,
       };
       const previousRecent = queryClient.getQueriesData<TransactionListItem[]>({ queryKey: ['transactions', 'recent'] });
       queryClient.setQueriesData<TransactionListItem[]>({ queryKey: ['transactions', 'recent'] }, (old) =>

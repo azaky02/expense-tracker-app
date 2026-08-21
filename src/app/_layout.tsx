@@ -7,7 +7,9 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { Box } from '@/components/Box';
 import { bootstrapDb } from '@/db';
+import { ensureDefaultCashAccount } from '@/features/accounts/api';
 import { OnboardingScreen } from '@/features/onboarding/components/OnboardingScreen';
+import { runRecurringCatchUp } from '@/features/recurring/engine';
 import { UnlockScreen } from '@/features/security/components/UnlockScreen';
 import { useAutoLock } from '@/features/security/useAutoLock';
 import '@/i18n';
@@ -40,8 +42,20 @@ function AppGate() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="transactions/add" options={{ presentation: 'modal' }} />
       <Stack.Screen name="transactions/[id]/edit" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="cards/add" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="cards/[id]/edit" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="accounts/add" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="accounts/[id]/edit" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="transfers/add" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="custody/index" />
+      <Stack.Screen name="custody/[id]/index" />
+      <Stack.Screen name="recurring/index" />
+      <Stack.Screen name="recurring/add" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="recurring/[id]/edit" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="goals/index" />
+      <Stack.Screen name="goals/add" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="goals/[id]/index" />
+      <Stack.Screen name="bills/index" />
+      <Stack.Screen name="forecast/index" />
+      <Stack.Screen name="search/index" />
     </Stack>
   );
 }
@@ -55,6 +69,8 @@ export default function RootLayout() {
     async function prepare() {
       syncRtlOnBoot(language);
       await bootstrapDb();
+      await ensureDefaultCashAccount();
+      await runRecurringCatchUp();
       if (!cancelled) {
         setIsReady(true);
         await SplashScreen.hideAsync();
